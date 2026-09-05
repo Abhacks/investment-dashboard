@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SecureVest - Portal</title>
+    <title>SecureVest - Investment Portal</title>
     <style>
         :root {
-            --primary-color: #0b2341;
-            --accent-color: #00703c;
-            --bg-color: #f4f6f9;
-            --card-bg: #ffffff;
-            --text-color: #333333;
-            --border-color: #e0e0e0;
+            --primary: #0f172a;
+            --accent: #2563eb;
+            --success: #16a34a;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
         }
 
         * {
@@ -22,69 +23,68 @@
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            background-color: var(--bg);
+            color: var(--text);
             height: 100vh;
             display: flex;
             overflow: hidden;
         }
 
-        /* Utility Classes */
         .hidden {
             display: none !important;
         }
 
-        /* --- Login Screen Styling --- */
-        #login-container {
+        /* --- Login Screen --- */
+        #login-view {
             width: 100%;
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(135deg, var(--primary-color), #1a3a6b);
+            background: linear-gradient(135deg, var(--primary), #1e293b);
         }
 
-        .login-card {
-            background: white;
+        .login-box {
+            background: var(--card);
             padding: 40px;
-            border-radius: 8px;
+            border-radius: 12px;
             width: 100%;
             max-width: 400px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
 
-        .login-card h2 {
-            margin-bottom: 20px;
-            color: var(--primary-color);
+        .login-box h2 {
+            margin-bottom: 25px;
+            color: var(--primary);
             text-align: center;
         }
 
-        .form-group {
+        .input-group {
             margin-bottom: 20px;
         }
 
-        .form-group label {
+        .input-group label {
             display: block;
             margin-bottom: 8px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 600;
         }
 
-        .form-group input {
+        .input-group input {
             width: 100%;
             padding: 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
             font-size: 1rem;
         }
 
         .btn {
             width: 100%;
             padding: 12px;
-            background-color: var(--accent-color);
+            background-color: var(--accent);
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
@@ -95,198 +95,354 @@
             opacity: 0.9;
         }
 
-        /* --- App Layout Styling --- */
-        #app-container {
+        /* --- Dashboard Layout --- */
+        #app-view {
             display: flex;
             width: 100%;
             height: 100vh;
         }
 
         sidebar {
-            width: 250px;
-            background-color: var(--primary-color);
+            width: 260px;
+            background-color: var(--primary);
             color: white;
             display: flex;
             flex-direction: column;
-            padding: 20px;
+            padding: 24px;
         }
 
         .logo {
-            font-size: 1.25rem;
+            font-size: 1.4rem;
             font-weight: bold;
             margin-bottom: 40px;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
 
-        .nav-links {
+        .nav-menu {
             list-style: none;
             flex-grow: 1;
         }
 
-        .nav-links li {
-            padding: 12px 15px;
+        .nav-item {
+            padding: 14px 16px;
             margin-bottom: 8px;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             transition: background 0.2s;
+            font-size: 0.95rem;
         }
 
-        .nav-links li:hover, .nav-links li.active {
-            background-color: rgba(255, 255, 255, 0.15);
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.1);
         }
 
-        .main-content {
+        .main-pane {
             flex-grow: 1;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
         }
 
-        header {
-            background: var(--card-bg);
-            padding: 20px 30px;
-            border-bottom: 1px solid var(--border-color);
+        topbar {
+            background: var(--card);
+            padding: 20px 32px;
+            border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .container {
-            padding: 30px;
+        .user-info {
+            font-weight: 600;
+        }
+
+        .logout-link {
+            background: none;
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .content-body {
+            padding: 32px;
             max-width: 1200px;
             width: 100%;
             margin: 0 auto;
         }
 
-        .tab-pane {
+        .tab-content {
             display: none;
         }
 
-        .tab-pane.active-pane {
+        .tab-content.active {
             display: block;
         }
 
-        .card {
-            background: var(--card-bg);
-            padding: 20px;
+        /* --- Components --- */
+        .grid-tiers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .tier-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 24px;
             border-radius: 8px;
-            border: 1px solid var(--border-color);
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .tier-card h4 {
+            font-size: 1.1rem;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+
+        .tier-card .price {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
             margin-bottom: 20px;
         }
 
-        .logout-btn {
-            background: none;
-            border: 1px solid white;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
+        .stats-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 24px;
+            border-radius: 8px;
+            margin-bottom: 20px;
         }
 
-        .logout-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
+        .stats-card h3 {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .stats-card .metric {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--success);
+        }
+
+        .wallet-box {
+            background: #f1f5f9;
+            border: 1px dashed #cbd5e1;
+            padding: 20px;
+            border-radius: 6px;
+            margin-top: 15px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 1.1rem;
         }
     </style>
 </head>
 <body>
 
-    <div id="login-container">
-        <div class="login-card">
-            <h2>SecureVest Login</h2>
-            <div class="form-group">
+    <!-- Login Screen -->
+    <div id="login-view">
+        <div class="login-box">
+            <h2>Member Portal</h2>
+            <div class="input-group">
                 <label>Email Address</label>
-                <input type="email" id="email" placeholder="investor@example.com" value="demo@securevest.com">
+                <input type="email" id="login-email" value="user@demo.com">
             </div>
-            <div class="form-group">
+            <div class="input-group">
                 <label>Password</label>
-                <input type="password" id="password" placeholder="••••••••" value="password">
+                <input type="password" id="login-pass" value="password123">
             </div>
-            <button class="btn" onclick="handleLogin()">Sign In</button>
+            <button class="btn" onclick="executeLogin()">Access Dashboard</button>
         </div>
     </div>
 
-    <div id="app-container" class="hidden">
+    <!-- App View -->
+    <div id="app-view" class="hidden">
         <sidebar>
             <div class="logo">SecureVest</div>
-            <ul class="nav-links">
-                <li class="active" onclick="switchTab('dashboard', this)">Dashboard</li>
-                <li onclick="switchTab('portfolio', this)">Portfolio Packages</li>
-                <li onclick="switchTab('withdrawal', this)">Withdrawal & Wallet</li>
-                <li onclick="switchTab('settings', this)">Settings</li>
+            <ul class="nav-menu">
+                <li class="nav-item active" onclick="switchTab('dashboard', this)">Dashboard Overview</li>
+                <li class="nav-item" onclick="switchTab('packages', this)">Select Package</li>
+                <li class="nav-item" onclick="switchTab('tracker', this)">Active Returns Tracker</li>
+                <li class="nav-item" onclick="switchTab('withdrawal', this)">Withdrawal & Payment</li>
             </ul>
         </sidebar>
 
-        <div class="main-content">
-            <header>
-                <h2 id="page-title">Dashboard Overview</h2>
-                <button class="logout-btn" onclick="handleLogout()">Logout</button>
-            </header>
+        <div class="main-pane">
+            <topbar>
+                <div class="user-info" id="display-user">Welcome Back</div>
+                <button class="logout-link" onclick="executeLogout()">Sign Out</button>
+            </topbar>
 
-            <div class="container">
-                <div id="dashboard" class="tab-pane active-pane">
-                    <div class="card">
-                        <h3>Account Summary</h3>
-                        <p style="margin-top: 10px; color: #666;">Welcome back! Use the sidebar tabs to navigate through your portfolio levels and check transaction statuses.</p>
+            <div class="content-body">
+                
+                <!-- Tab 1: Dashboard -->
+                <div id="dashboard" class="tab-content active">
+                    <div class="stats-card">
+                        <h3>Current Balance</h3>
+                        <div class="metric" id="dash-balance">$0.00</div>
+                    </div>
+                    <div class="stats-card">
+                        <h3>Active Package Tier</h3>
+                        <p id="dash-tier" style="font-size: 1.2rem; font-weight: 600; color: var(--accent);">None Selected</p>
                     </div>
                 </div>
 
-                <div id="portfolio" class="tab-pane">
-                    <div class="card">
-                        <h3>Investment Tiers</h3>
-                        <p style="margin-top: 10px; color: #666;">Select your preferred tier package ($500, $1,000, $1,500, up to $5,000) from active choices below.</p>
+                <!-- Tab 2: Packages -->
+                <div id="packages" class="tab-content">
+                    <h2>Choose Investment Package</h2>
+                    <p style="color: #64748b; margin-top: 5px;">Select an entry level amount to begin your 6-day cycle simulation.</p>
+                    <div class="grid-tiers" id="tier-grid">
+                        <!-- Dynamically populated via script -->
                     </div>
                 </div>
 
-                <div id="withdrawal" class="tab-pane">
-                    <div class="card">
-                        <h3>Withdrawal & Payment Portal</h3>
-                        <p style="margin-top: 10px; color: #666;">Provide wallet destination details to process rewards payouts securely.</p>
+                <!-- Tab 3: Tracker -->
+                <div id="tracker" class="tab-content">
+                    <h2>Live Returns Simulation (6-Day Cycle)</h2>
+                    <p style="color: #64748b; margin-top: 5px;">Returns randomly fluctuate up and down over time toward a 10x target multiplier.</p>
+                    <br>
+                    <div class="stats-card">
+                        <h3>Live Value Tracker</h3>
+                        <div class="metric" id="live-tracker-val">$0.00</div>
+                        <p id="tracker-status" style="margin-top: 10px; font-size: 0.9rem; color: #64748b;">Status: Waiting for package selection.</p>
                     </div>
                 </div>
 
-                <div id="settings" class="tab-pane">
-                    <div class="card">
-                        <h3>Account Settings</h3>
-                        <p style="margin-top: 10px; color: #666;">Update your profile details and security configurations.</p>
+                <!-- Tab 4: Withdrawal & Payment -->
+                <div id="withdrawal" class="tab-content">
+                    <h2>Withdrawal & Verification Portal</h2>
+                    <p style="color: #64748b; margin-top: 5px;">To process and cash out your rewarded returns, a deposit matching your initial input package is required.</p>
+                    <br>
+                    <div class="stats-card" id="withdrawal-step-1">
+                        <h3>Available Rewards</h3>
+                        <div class="metric" id="reward-val">$0.00</div>
+                        <br>
+                        <button class="btn" style="max-width: 250px;" onclick="triggerWithdrawalRequest()">Request Cash Out</button>
+                    </div>
+
+                    <div class="stats-card hidden" id="withdrawal-step-2">
+                        <h3>Action Required: Deposit Input Amount</h3>
+                        <p style="margin-top: 5px;">Please transfer your input amount of <strong id="req-amount">$0</strong> to the secure random wallet address below to unlock rewards:</p>
+                        <div class="wallet-box" id="random-wallet">0x71C839b92A41f82cE3d58A912b4B812c3e10A92b</div>
+                        <br>
+                        <button class="btn" style="background-color: var(--success); max-width: 250px;" onclick="confirmPaymentSimulation()">I Have Made Payment</button>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
 
     <script>
-        function handleLogin() {
-            // Simple visual toggle for login demo
-            document.getElementById('login-container').classList.add('hidden');
-            document.getElementById('app-container').classList.remove('hidden');
+        let currentTier = 0;
+        let currentBalance = 0;
+        let simulationInterval = null;
+
+        const tiers = [500, 1000, 1500, 2000, 2500, 3000, 4000, 5000];
+
+        // Initialize Tiers on Load
+        window.onload = function() {
+            const grid = document.getElementById('tier-grid');
+            tiers.forEach(amt => {
+                grid.innerHTML += `
+                    <div class="tier-card">
+                        <h4>Standard Tier</h4>
+                        <div class="price">$${amt.toLocaleString()}</div>
+                        <button class="btn" onclick="selectTier(${amt})">Select Package</button>
+                    </div>
+                `;
+            });
+        };
+
+        function executeLogin() {
+            const email = document.getElementById('login-email').value;
+            document.getElementById('display-user').innerText = `Welcome, ${email}`;
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('app-view').classList.remove('hidden');
         }
 
-        function handleLogout() {
-            document.getElementById('app-container').classList.add('hidden');
-            document.getElementById('login-container').classList.remove('hidden');
+        function executeLogout() {
+            document.getElementById('app-view').classList.add('hidden');
+            document.getElementById('login-view').classList.remove('hidden');
+            clearInterval(simulationInterval);
         }
 
         function switchTab(tabId, element) {
-            // Hide all tab panes
-            const panes = document.querySelectorAll('.tab-pane');
-            panes.forEach(pane => pane.classList.remove('active-pane'));
-
-            // Remove active class from all navigation links
-            const navItems = document.querySelectorAll('.nav-links li');
-            navItems.forEach(item => item.classList.remove('active'));
-
-            // Show selected pane and highlight clicked tab
-            document.getElementById(tabId).classList.add('active-pane');
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
             element.classList.add('active');
+        }
 
-            // Update header title dynamically
-            const titles = {
-                'dashboard': 'Dashboard Overview',
-                'portfolio': 'Portfolio Packages',
-                'withdrawal': 'Withdrawal & Wallet',
-                'settings': 'Account Settings'
-            };
-            document.getElementById('page-title').innerText = titles[tabId];
+        function selectTier(amount) {
+            currentTier = amount;
+            currentBalance = amount;
+            document.getElementById('dash-tier').innerText = `$${amount.toLocaleString()} Package Active`;
+            document.getElementById('dash-balance').innerText = `$${currentBalance.toLocaleString()}`;
+            document.getElementById('reward-val').innerText = `$${(amount * 10).toLocaleString()}`;
+            document.getElementById('req-amount').innerText = `$${amount.toLocaleString()}`;
+            
+            alert(`Package of $${amount} selected successfully! Check the Active Returns Tracker.`);
+            
+            startSimulation();
+        }
+
+        function startSimulation() {
+            if (simulationInterval) clearInterval(simulationInterval);
+            
+            let target = currentTier * 10;
+            let step = 0;
+
+            document.getElementById('tracker-status').innerText = `Status: Simulating live 6-day market fluctuations...`;
+
+            simulationInterval = setInterval(() => {
+                // Random addition and reduction logic
+                let fluctuation = (Math.random() * 200 - 90); 
+                currentBalance += fluctuation;
+
+                // Keep bounds between initial tier and 10x target
+                if (currentBalance < currentTier) currentBalance = currentTier;
+                if (currentBalance >= target) currentBalance = target;
+
+                document.getElementById('live-tracker-val').innerText = `$${Math.floor(currentBalance).toLocaleString()}`;
+                document.getElementById('dash-balance').innerText = `$${Math.floor(currentBalance).toLocaleString()}`;
+
+                if (currentBalance >= target) {
+                    document.getElementById('tracker-status').innerText = `Status: Cycle Complete! 10x Target Reached ($${target.toLocaleString()}).`;
+                    clearInterval(simulationInterval);
+                }
+            }, 2000);
+        }
+
+        function triggerWithdrawalRequest() {
+            if (currentTier === 0) {
+                alert("Please select a package first before requesting a withdrawal.");
+                return;
+            }
+            // Generate a random wallet hash format
+            const randomWallets = [
+                "0x482aB19283fE491029c819283B4102938481A02b",
+                "1BoatSLRHtKNngkdJK4fQJv3z481A2c1B79",
+                "TJw891273918273918237918273918273A",
+                "0x71C839b92A41f82cE3d58A912b4B812c3e10A92b"
+            ];
+            let chosenWallet = randomWallets[Math.floor(Math.random() * randomWallets.length)];
+            document.getElementById('random-wallet').innerText = chosenWallet;
+
+            document.getElementById('withdrawal-step-1').classList.add('hidden');
+            document.getElementById('withdrawal-step-2').classList.remove('hidden');
+        }
+
+        function confirmPaymentSimulation() {
+            alert("Deposit transaction submitted! Verification is pending confirmation on the network.");
+            document.getElementById('withdrawal-step-2').innerHTML = `<h3>Verification Pending</h3><p style="margin-top:10px; color:var(--success);">Your deposit confirmation is being verified. Rewards will be released shortly.</p>`;
         }
     </script>
 </body>
