@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureVest - Investment Portfolio</title>
+    <style>
+        :root {
+            --primary-color: #0b2341;
+            --accent-color: #00703c;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #e0e0e0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Navigation */
+        sidebar {
+            width: 250px;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 40px;
+            letter-spacing: 1px;
+        }
+
+        .nav-links {
+            list-style: none;
+            flex-grow: 1;
+        }
+
+        .nav-links li {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .nav-links li:hover, .nav-links li.active {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        header {
+            background: var(--card-bg);
+            padding: 20px 30px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-profile {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .container {
+            padding: 30px;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .card h3 {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card .value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .table-section {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .table-section h2 {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+
+        th {
+            background-color: #fafafa;
+            color: #555;
+        }
+
+        .positive {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                height: auto;
+            }
+            sidebar {
+                width: 100%;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <sidebar>
+        <div class="logo">SecureVest</div>
+        <ul class="nav-links">
+            <li class="active">Dashboard</li>
+            <li>Portfolio</li>
+            <li>Market Research</li>
+            <li>Transactions</li>
+            <li>Settings</li>
+        </ul>
+    </sidebar>
+
+    <div class="main-content">
+        <header>
+            <h1>Overview</h1>
+            <div class="user-profile">Welcome, Investor</div>
+        </header>
+
+        <div class="container">
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>Total Portfolio Value</h3>
+                    <div class="value" id="portfolio-value">$12,450.00</div>
+                </div>
+                <div class="card">
+                    <h3>Available Cash</h3>
+                    <div class="value">$1,500.00</div>
+                </div>
+                <div class="card">
+                    <h3>Total Return (YTD)</h3>
+                    <div class="value positive">+14.2%</div>
+                </div>
+            </div>
+
+            <div class="table-section">
+                <h2>Asset Allocation</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Asset Name</th>
+                            <th>Ticker</th>
+                            <th>Shares / Units</th>
+                            <th>Current Price</th>
+                            <th>Total Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>S&P 500 Index Fund</td>
+                            <td>SPY</td>
+                            <td>25</td>
+                            <td>$450.00</td>
+                            <td>$11,250.00</td>
+                        </tr>
+                        <tr>
+                            <td>Global Tech ETF</td>
+                            <td>TEC</td>
+                            <td>10</td>
+                            <td>$120.00</td>
+                            <td>$1,200.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Optional safe simulation script (e.g. slight natural market fluctuation)
+        setInterval(() => {
+            const valueElement = document.getElementById('portfolio-value');
+            let baseValue = 12450.00;
+            // Add tiny random fluctuation (-$2 to +$2) to simulate live ticker feel safely
+            let fluctuation = (Math.random() * 4 - 2).toFixed(2);
+            let newValue = (baseValue + parseFloat(fluctuation)).toLocaleString('en-US', {style: 'currency', currency: 'USD'});
+            valueElement.innerText = newValue;
+        }, 5000);
+    </script>
+</body>
+</html>
