@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AuraWealth - Pro Investment Terminal</title>
+    <title>AuraWealth Institutional Terminal</title>
     <style>
         :root {
-            --bg-main: #090d16;
-            --bg-sidebar: #0e1626;
-            --card-bg: #131c31;
+            --bg-main: #060913;
+            --bg-sidebar: #0b111e;
+            --card-bg: #0f172a;
             --border-color: #1e293b;
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
             --success: #10b981;
             --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --text-muted: #64748b;
         }
 
         * {
@@ -43,7 +43,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: radial-gradient(circle at center, #1b2a4a 0%, var(--bg-main) 100%);
+            background: radial-gradient(circle at center, #111e38 0%, var(--bg-main) 100%);
         }
 
         .auth-box {
@@ -53,7 +53,7 @@
             border-radius: 16px;
             width: 100%;
             max-width: 420px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
         }
 
         .auth-box h2 {
@@ -85,7 +85,7 @@
         .input-group input {
             width: 100%;
             padding: 14px;
-            background: #0b111e;
+            background: #060913;
             border: 1px solid var(--border-color);
             border-radius: 8px;
             color: white;
@@ -176,7 +176,7 @@
         }
 
         .nav-item:hover, .nav-item.active {
-            background-color: rgba(59, 130, 246, 0.1);
+            background-color: rgba(37, 99, 235, 0.15);
             color: white;
         }
 
@@ -186,6 +186,39 @@
             flex-direction: column;
             overflow-y: auto;
             background-color: var(--bg-main);
+            position: relative;
+        }
+
+        /* --- Complex Loading Curtain Overlay --- */
+        #tab-loader {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(6, 9, 19, 0.85);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.3s ease;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         topbar {
@@ -198,7 +231,7 @@
         }
 
         .user-pill {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.03);
             padding: 8px 16px;
             border-radius: 20px;
             font-size: 0.9rem;
@@ -297,7 +330,7 @@
         }
 
         .wallet-display {
-            background: #0b111e;
+            background: #060913;
             border: 1px dashed var(--border-color);
             padding: 18px;
             border-radius: 8px;
@@ -307,23 +340,54 @@
             font-size: 1.05rem;
             color: #60a5fa;
         }
+
+        /* Ledger Table Styling */
+        .ledger-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        .ledger-table th, .ledger-table td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .ledger-table th {
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+
+        .badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
 
     <div id="signup-view" class="auth-container">
         <div class="auth-box">
-            <h2>Create Account</h2>
-            <p class="subtitle">Set up your secure investment credential</p>
+            <h2>Institutional Registration</h2>
+            <p class="subtitle">Establish your secure terminal credentials</p>
             <div class="input-group">
-                <label>Choose Username</label>
-                <input type="text" id="reg-user" placeholder="e.g. trader_pro">
+                <label>Terminal Username</label>
+                <input type="text" id="reg-user" placeholder="e.g. alex_trader">
             </div>
             <div class="input-group">
-                <label>Choose Password</label>
+                <label>Access Password</label>
                 <input type="password" id="reg-pass" placeholder="••••••••">
             </div>
-            <button class="btn" onclick="handleRegister()">Register Account</button>
+            <button class="btn" onclick="handleRegister()">Register Credential</button>
             <div class="auth-switch">
                 Already registered? <span onclick="showLogin()">Sign In here</span>
             </div>
@@ -332,19 +396,19 @@
 
     <div id="login-view" class="auth-container hidden">
         <div class="auth-box">
-            <h2>Welcome Back</h2>
-            <p class="subtitle">Enter your credentials to access terminal</p>
+            <h2>Terminal Authentication</h2>
+            <p class="subtitle">Enter credentials to mount session</p>
             <div class="input-group">
-                <label>Username</label>
+                <label>Terminal Username</label>
                 <input type="text" id="login-user" placeholder="Enter username">
             </div>
             <div class="input-group">
-                <label>Password</label>
+                <label>Access Password</label>
                 <input type="password" id="login-pass" placeholder="••••••••">
             </div>
-            <button class="btn" onclick="handleLogin()">Sign In</button>
+            <button class="btn" onclick="handleLogin()">Mount Session</button>
             <div class="auth-switch">
-                Don't have an account? <span onclick="showSignup()">Create one</span>
+                Need an account? <span onclick="showSignup()">Register credential</span>
             </div>
         </div>
     </div>
@@ -357,47 +421,53 @@
                 <li class="nav-item" onclick="switchTab('packages', this)">Investment Packages</li>
                 <li class="nav-item" onclick="switchTab('tracker', this)">Returns Tracker (6-Day)</li>
                 <li class="nav-item" onclick="switchTab('withdrawal', this)">Withdrawal Portal</li>
+                <li class="nav-item" onclick="switchTab('ledger', this)">Audit Ledger</li>
             </ul>
         </sidebar>
 
         <div class="main-pane">
+            <div id="tab-loader" class="hidden">
+                <div class="spinner"></div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); letter-spacing: 1px;">SYNCING SECURE MODULE...</p>
+            </div>
+
             <topbar>
-                <div class="user-pill" id="display-user">User: ProTrader</div>
-                <button class="logout-btn" onclick="handleLogout()">Sign Out</button>
+                <div class="user-pill" id="display-user">Terminal: Active</div>
+                <button class="logout-btn" onclick="handleLogout()">Terminate Session</button>
             </topbar>
 
             <div class="content-body">
                 
                 <div id="dashboard" class="tab-content active">
                     <div class="stats-card">
-                        <h3>Live Portfolio Value</h3>
+                        <h3>Live Portfolio Valuation</h3>
                         <div class="metric" id="dash-balance">$0.00</div>
                     </div>
                     <div class="stats-card">
-                        <h3>Active Package Level</h3>
-                        <p id="dash-tier" style="font-size: 1.25rem; font-weight: 600; color: var(--accent);">No Package Active</p>
+                        <h3>Active Investment Tier</h3>
+                        <p id="dash-tier" style="font-size: 1.25rem; font-weight: 600; color: var(--accent);">No Package Mounted</p>
                     </div>
                 </div>
 
                 <div id="packages" class="tab-content">
-                    <h2 style="font-size: 1.5rem; font-weight: 600;">Available Tiers</h2>
-                    <p style="color: var(--text-muted); margin-top: 6px;">Select your preferred tier package to launch the 6-day cycle.</p>
+                    <h2 style="font-size: 1.5rem; font-weight: 600;">Institutional Liquidity Tiers</h2>
+                    <p style="color: var(--text-muted); margin-top: 6px;">Select an allocation package to initialize the automated 6-day cycle.</p>
                     <div class="grid-tiers" id="tier-grid">
                         </div>
                 </div>
 
                 <div id="tracker" class="tab-content">
                     <h2 style="font-size: 1.5rem; font-weight: 600;">Live Returns Simulation</h2>
-                    <p style="color: var(--text-muted); margin-top: 6px;">Stable gradual fluctuations tracking toward the 10x target multiplier over 6 days.</p>
+                    <p style="color: var(--text-muted); margin-top: 6px;">Stable gradual calculations tracking toward the 10x target multiplier over 6 days.</p>
                     <br>
                     <div class="stats-card">
                         <h3>Current Cycle Valuation</h3>
                         <div class="metric" id="live-tracker-val">$0.00</div>
-                        <p id="tracker-status" style="margin-top: 12px; font-size: 0.9rem; color: var(--text-muted);">Status: Awaiting package activation.</p>
+                        <p id="tracker-status" style="margin-top: 12px; font-size: 0.9rem; color: var(--text-muted);">Status: Awaiting tier allocation.</p>
                     </div>
                     <div class="stats-card">
                         <h3>Cycle Progress (Target 10x)</h3>
-                        <div style="background: #1e293b; border-radius: 8px; height: 16px; width: 100%; overflow: hidden; margin-top: 10px;">
+                        <div style="background: #060913; border-radius: 8px; height: 16px; width: 100%; overflow: hidden; margin-top: 10px; border: 1px solid var(--border-color);">
                             <div id="progress-bar-fill" style="background: var(--success); height: 100%; width: 0%; transition: width 0.4s;"></div>
                         </div>
                         <p id="progress-text" style="margin-top: 8px; font-size: 0.85rem; color: var(--text-muted);">0% Completed</p>
@@ -405,8 +475,8 @@
                 </div>
 
                 <div id="withdrawal" class="tab-content">
-                    <h2 style="font-size: 1.5rem; font-weight: 600;">Withdrawal & Settlement</h2>
-                    <p style="color: var(--text-muted); margin-top: 6px;">Claim rewarded returns. An active input balance verification deposit is required.</p>
+                    <h2 style="font-size: 1.5rem; font-weight: 600;">Withdrawal & Settlement Gateway</h2>
+                    <p style="color: var(--text-muted); margin-top: 6px;">Claim rewarded returns. An active input balance verification deposit is mandatory.</p>
                     <br>
                     <div class="stats-card" id="withdrawal-step-1">
                         <h3>Available Balance for Payout</h3>
@@ -417,10 +487,33 @@
 
                     <div class="stats-card hidden" id="withdrawal-step-2">
                         <h3>Deposit Verification Required</h3>
-                        <p style="margin-top: 6px; color: var(--text-muted);">Transfer the input equivalent of <strong id="req-amount" style="color: white;">$0</strong> to the secure deposit wallet below:</p>
+                        <p style="margin-top: 6px; color: var(--text-muted);">Transfer matching input equivalent of <strong id="req-amount" style="color: white;">$0</strong> to the institutional deposit wallet:</p>
                         <div class="wallet-display" id="random-wallet">0x71C839b92A41f82cE3d58A912b4B812c3e10A92b</div>
                         <br>
                         <button class="btn" style="background-color: var(--success); max-width: 260px;" onclick="confirmPaymentSimulation()">Confirm Payment Sent</button>
+                    </div>
+                </div>
+
+                <div id="ledger" class="tab-content">
+                    <h2 style="font-size: 1.5rem; font-weight: 600;">System Audit Ledger</h2>
+                    <p style="color: var(--text-muted); margin-top: 6px;">Real-time cryptologic log of terminal operations.</p>
+                    <br>
+                    <div class="stats-card" style="padding: 0; overflow: hidden;">
+                        <table class="ledger-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Operation</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledger-body">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: var(--text-muted);">No records logged in current session.</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -429,11 +522,11 @@
     </div>
 
     <script>
-        let registeredUserStorage = { username: "", password: "" };
         let currentTier = 0;
         let currentBalance = 0;
         let simulationInterval = null;
         let cycleStartTime = 0;
+        let ledgerEntries = [];
 
         const tiers = [500, 1000, 1500, 2000, 2500, 3000, 4000, 5000];
 
@@ -442,9 +535,9 @@
             tiers.forEach(amt => {
                 grid.innerHTML += `
                     <div class="tier-card">
-                        <h4>Tier Package</h4>
+                        <h4>Allocation Tier</h4>
                         <div class="price">$${amt.toLocaleString()}</div>
-                        <button class="btn" onclick="selectTier(${amt})">Select Tier</button>
+                        <button class="btn" onclick="selectTier(${amt})">Mount Allocation</button>
                     </div>
                 `;
             });
@@ -465,14 +558,15 @@
             const p = document.getElementById('reg-pass').value.trim();
 
             if (!u || !p) {
-                alert("Please fill in both a username and password.");
+                alert("Please provide a valid terminal username and password.");
                 return;
             }
 
-            registeredUserStorage.username = u;
-            registeredUserStorage.password = p;
+            // Save permanently in localStorage for retention
+            localStorage.setItem('aura_user', u);
+            localStorage.setItem('aura_pass', p);
 
-            alert("Account created successfully! You can now sign in.");
+            alert("Credential registered successfully! You may now sign in.");
             showLogin();
         }
 
@@ -480,17 +574,16 @@
             const u = document.getElementById('login-user').value.trim();
             const p = document.getElementById('login-pass').value.trim();
 
-            if (!registeredUserStorage.username) {
-                registeredUserStorage.username = "Trader";
-                registeredUserStorage.password = "password";
-            }
+            const savedUser = localStorage.getItem('aura_user') || "admin";
+            const savedPass = localStorage.getItem('aura_pass') || "admin123";
 
-            if (u === registeredUserStorage.username && p === registeredUserStorage.password) {
-                document.getElementById('display-user').innerText = `User: ${u}`;
+            if (u === savedUser && p === savedPass) {
+                document.getElementById('display-user').innerText = `Terminal: ${u}`;
                 document.getElementById('login-view').classList.add('hidden');
                 document.getElementById('app-view').classList.remove('hidden');
+                addLedgerRecord("Session Mounted", "System", "Success");
             } else {
-                alert("Invalid username or password. Please check your credentials.");
+                alert("Authentication failed. Invalid username or password.");
             }
         }
 
@@ -500,26 +593,35 @@
             clearInterval(simulationInterval);
         }
 
+        // Slow tab switching simulating professional enterprise server fetch latency
         function switchTab(tabId, element) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            
-            document.getElementById(tabId).classList.add('active');
-            element.classList.add('active');
+            const loader = document.getElementById('tab-loader');
+            loader.classList.remove('hidden');
 
-            if (tabId === 'withdrawal') {
-                document.getElementById('reward-val').innerText = `$${Math.floor(currentBalance).toLocaleString()}`;
-            }
+            setTimeout(() => {
+                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+                
+                document.getElementById(tabId).classList.add('active');
+                element.classList.add('active');
+
+                if (tabId === 'withdrawal') {
+                    document.getElementById('reward-val').innerText = `$${Math.floor(currentBalance).toLocaleString()}`;
+                }
+
+                loader.classList.add('hidden');
+            }, 600); // 0.6 second deliberate professional lag
         }
 
         function selectTier(amount) {
             currentTier = amount;
             currentBalance = amount;
-            document.getElementById('dash-tier').innerText = `$${amount.toLocaleString()} Package Active`;
+            document.getElementById('dash-tier').innerText = `$${amount.toLocaleString()} Tier Active`;
             document.getElementById('dash-balance').innerText = `$${amount.toLocaleString()}`;
             document.getElementById('req-amount').innerText = `$${amount.toLocaleString()}`;
             
-            alert(`Package of $${amount} activated successfully. Check the Returns Tracker.`);
+            addLedgerRecord("Tier Allocation", `$${amount.toLocaleString()}`, "Active");
+            alert(`Liquidity allocation of $${amount} mounted successfully.`);
             startSimulation();
         }
 
@@ -528,7 +630,7 @@
             
             let target = currentTier * 10;
             cycleStartTime = Date.now();
-            document.getElementById('tracker-status').innerText = `Status: Simulating 6-day progress cycle...`;
+            document.getElementById('tracker-status').innerText = `Status: Simulating 6-day institutional growth cycle...`;
 
             simulationInterval = setInterval(() => {
                 let fluctuation = (Math.random() * 80 - 30); 
@@ -554,6 +656,7 @@
 
                 if (currentBalance >= target) {
                     document.getElementById('tracker-status').innerText = `Status: Target Reached! 10x multiplier completed ($${target.toLocaleString()}).`;
+                    addLedgerRecord("Cycle Complete (10x)", `$${target.toLocaleString()}`, "Completed");
                     clearInterval(simulationInterval);
                 }
             }, 4000);
@@ -561,7 +664,7 @@
 
         function triggerWithdrawalRequest() {
             if (currentTier === 0) {
-                alert("Please select a package and let the system run first.");
+                alert("Please select and mount an allocation tier first.");
                 return;
             }
 
@@ -576,12 +679,33 @@
 
             document.getElementById('withdrawal-step-1').classList.add('hidden');
             document.getElementById('withdrawal-step-2').classList.remove('hidden');
+            addLedgerRecord("Cash-Out Request", `$${Math.floor(currentBalance).toLocaleString()}`, "Pending Verification");
         }
 
         function confirmPaymentSimulation() {
-            alert("Deposit submitted! Network confirmation is currently pending.");
-            document.getElementById('withdrawal-step-2').innerHTML = `<h3>Verification in Progress</h3><p style="margin-top:10px; color:var(--success);">Your matching input payment has been logged. Payout execution pending validation.</p>`;
+            alert("Deposit submitted! Network hash confirmation pending verification.");
+            document.getElementById('withdrawal-step-2').innerHTML = `<h3>Verification in Progress</h3><p style="margin-top:10px; color:var(--success);">Matching deposit payment registered on network ledger. Settlement pending execution.</p>`;
+            addLedgerRecord("Verification Deposit", `$${currentTier.toLocaleString()}`, "Pending Network");
+        }
+
+        function addLedgerRecord(operation, amount, status) {
+            const time = new Date().toLocaleTimeString();
+            ledgerEntries.unshift({ time, operation, amount, status });
+
+            const tbody = document.getElementById('ledger-body');
+            tbody.innerHTML = "";
+            ledgerEntries.forEach(entry => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${entry.time}</td>
+                        <td><strong>${entry.operation}</strong></td>
+                        <td>${entry.amount}</td>
+                        <td><span class="badge">${entry.status}</span></td>
+                    </tr>
+                `;
+            });
         }
     </script>
 </body>
 </html>
+
