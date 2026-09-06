@@ -395,15 +395,14 @@
                         <div class="metric" id="live-tracker-val">$0.00</div>
                         <p id="tracker-status" style="margin-top: 12px; font-size: 0.9rem; color: var(--text-muted);">Status: Awaiting package activation.</p>
                     </div>
-                    
+                    <div class="stats-card">
+                        <h3>Cycle Progress (Target 10x)</h3>
+                        <div style="background: #1e293b; border-radius: 8px; height: 16px; width: 100%; overflow: hidden; margin-top: 10px;">
+                            <div id="progress-bar-fill" style="background: var(--success); height: 100%; width: 0%; transition: width 0.4s;"></div>
+                        </div>
+                        <p id="progress-text" style="margin-top: 8px; font-size: 0.85rem; color: var(--text-muted);">0% Completed</p>
+                    </div>
                 </div>
-                <div class="stats-card">
-    <h3>Cycle Progress (Target 10x)</h3>
-    <div style="background: #1e293b; border-radius: 8px; height: 16px; width: 100%; overflow: hidden; margin-top: 10px;">
-        <div id="progress-bar-fill" style="background: var(--success); height: 100%; width: 0%; transition: width 0.4s;"></div>
-    </div>
-    <p id="progress-text" style="margin-top: 8px; font-size: 0.85rem; color: var(--text-muted);">0% Completed</p>
-</div>
 
                 <div id="withdrawal" class="tab-content">
                     <h2 style="font-size: 1.5rem; font-weight: 600;">Withdrawal & Settlement</h2>
@@ -434,6 +433,7 @@
         let currentTier = 0;
         let currentBalance = 0;
         let simulationInterval = null;
+        let cycleStartTime = 0;
 
         const tiers = [500, 1000, 1500, 2000, 2500, 3000, 4000, 5000];
 
@@ -481,7 +481,6 @@
             const p = document.getElementById('login-pass').value.trim();
 
             if (!registeredUserStorage.username) {
-                // Default fallback if skipped
                 registeredUserStorage.username = "Trader";
                 registeredUserStorage.password = "password";
             }
@@ -508,7 +507,6 @@
             document.getElementById(tabId).classList.add('active');
             element.classList.add('active');
 
-            // Synchronize available balance precisely when switching to the withdrawal tab
             if (tabId === 'withdrawal') {
                 document.getElementById('reward-val').innerText = `$${Math.floor(currentBalance).toLocaleString()}`;
             }
@@ -529,9 +527,9 @@
             if (simulationInterval) clearInterval(simulationInterval);
             
             let target = currentTier * 10;
+            cycleStartTime = Date.now();
             document.getElementById('tracker-status').innerText = `Status: Simulating 6-day progress cycle...`;
 
-            // Frequency reduced: updates every 4 seconds for smoother, stable pace
             simulationInterval = setInterval(() => {
                 let fluctuation = (Math.random() * 80 - 30); 
                 currentBalance += fluctuation;
@@ -542,6 +540,17 @@
                 let formatted = `$${Math.floor(currentBalance).toLocaleString()}`;
                 document.getElementById('live-tracker-val').innerText = formatted;
                 document.getElementById('dash-balance').innerText = formatted;
+
+                const totalCycleTime = 6 * 24 * 60 * 60 * 1000;
+                let elapsed = Date.now() - cycleStartTime;
+                let progressPercent = Math.min(100, Math.max(0, (elapsed / totalCycleTime) * 100));
+
+                const fill = document.getElementById('progress-bar-fill');
+                const text = document.getElementById('progress-text');
+                if (fill && text) {
+                    fill.style.width = progressPercent.toFixed(1) + '%';
+                    text.textContent = progressPercent.toFixed(1) + '% Completed (6-Day Target)';
+                }
 
                 if (currentBalance >= target) {
                     document.getElementById('tracker-status').innerText = `Status: Target Reached! 10x multiplier completed ($${target.toLocaleString()}).`;
@@ -576,4 +585,3 @@
     </script>
 </body>
 </html>
-
