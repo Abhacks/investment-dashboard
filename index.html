@@ -170,21 +170,34 @@
             font-weight: 600;
         }
 
-        /* --- Dashboard Application Layout --- */
+        /* --- Dashboard Application Wrapper --- */
         #app-wrapper {
             display: flex;
             width: 100%;
             height: calc(100vh - 33px);
             overflow: hidden;
+            position: relative;
         }
 
+        /* Collapsible Sidebar Drawer */
         sidebar {
+            position: absolute;
+            left: -280px;
+            top: 0;
             width: 280px;
+            height: 100%;
             background-color: var(--bg-sidebar);
             border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
             padding: 24px;
+            z-index: 50;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+        }
+
+        sidebar.open {
+            left: 0;
         }
 
         .logo-area {
@@ -195,11 +208,23 @@
             color: white;
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: space-between;
         }
 
         .logo-area span {
             color: var(--accent);
+        }
+
+        .close-sidebar {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.25rem;
+            cursor: pointer;
+        }
+
+        .close-sidebar:hover {
+            color: white;
         }
 
         .nav-menu {
@@ -233,6 +258,7 @@
             overflow-y: auto;
             background-color: var(--bg-main);
             position: relative;
+            width: 100%;
         }
 
         /* --- Loading Curtain Overlay --- */
@@ -274,6 +300,31 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .hamburger-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hamburger-btn:hover {
+            border-color: var(--accent);
+            background: rgba(37, 99, 235, 0.15);
         }
 
         .user-pill {
@@ -477,14 +528,12 @@
 
     <!-- Live Market Ticker -->
     <div class="market-ticker">
-        <div class="market-ticker">
-            <div class="ticker-item">S&P 500: <strong>5,842.10</strong><span>+0.64%</span></div>
-            <div class="ticker-item">NASDAQ: <strong>18,310.50</strong><span>+1.12%</span></div>
-            <div class="ticker-item">BTC/USD: <strong>$91,420.00</strong><span>+2.45%</span></div>
-            <div class="ticker-item">ETH/USD: <strong>$3,410.25</strong><span>+1.80%</span></div>
-            <div class="ticker-item down">US 10Y Yield: <strong>4.24%</strong><span>-0.08%</span></div>
-            <div class="ticker-item">AURA LIQUIDITY INDEX: <strong>1,480.92</strong><span>+4.15%</span></div>
-        </div>
+        <div class="ticker-item">S&P 500: <strong>5,842.10</strong><span>+0.64%</span></div>
+        <div class="ticker-item">NASDAQ: <strong>18,310.50</strong><span>+1.12%</span></div>
+        <div class="ticker-item">BTC/USD: <strong>$91,420.00</strong><span>+2.45%</span></div>
+        <div class="ticker-item">ETH/USD: <strong>$3,410.25</strong><span>+1.80%</span></div>
+        <div class="ticker-item down">US 10Y Yield: <strong>4.24%</strong><span>-0.08%</span></div>
+        <div class="ticker-item">AURA LIQUIDITY INDEX: <strong>1,480.92</strong><span>+4.15%</span></div>
     </div>
 
     <!-- Sign Up View -->
@@ -516,7 +565,7 @@
                 </div>
             </div>
 
-            <button class="btn" onclick="handleRegister()">Provision Terminal Credential</button>
+            <button class="btn" onclick="delayedAction(handleRegister)">Provision Terminal Credential</button>
             <div class="auth-switch">
                 Already registered? <span onclick="showLogin()">Sign In with Email</span>
             </div>
@@ -536,7 +585,7 @@
                 <label>Secure Password</label>
                 <input type="password" id="login-pass" placeholder="••••••••">
             </div>
-            <button class="btn" onclick="handleLogin()">Mount Session</button>
+            <button class="btn" onclick="delayedAction(handleLogin)">Mount Session</button>
             <div class="auth-switch">
                 Need an institutional account? <span onclick="showSignup()">Register credential</span>
             </div>
@@ -545,8 +594,11 @@
 
     <!-- Dashboard Application Wrapper -->
     <div id="app-wrapper" class="hidden">
-        <sidebar>
-            <div class="logo-area">⚡ <span>AuraWealth</span> Terminal</div>
+        <sidebar id="app-sidebar">
+            <div class="logo-area">
+                <span>⚡ AuraWealth</span>
+                <button class="close-sidebar" onclick="toggleSidebar()">✕</button>
+            </div>
             <ul class="nav-menu">
                 <li class="nav-item active" onclick="switchTab('dashboard', this)">📊 Dashboard Overview</li>
                 <li class="nav-item" onclick="switchTab('packages', this)">💼 Liquidity Tiers</li>
@@ -559,11 +611,14 @@
         <div class="main-pane">
             <div id="tab-loader" class="hidden">
                 <div class="spinner"></div>
-                <p style="font-size: 0.8rem; color: var(--text-muted); letter-spacing: 1px;">ESTABLISHING SECURE PROTOCOL...</p>
+                <p id="loader-text" style="font-size: 0.8rem; color: var(--text-muted); letter-spacing: 1px;">PROCESSING PROTOCOL...</p>
             </div>
 
             <topbar>
-                <div class="user-pill" id="display-user">Terminal: Active Session</div>
+                <div class="topbar-left">
+                    <button class="hamburger-btn" onclick="toggleSidebar()" title="Toggle Navigation Tabs">☰</button>
+                    <div class="user-pill" id="display-user">Terminal: Active Session</div>
+                </div>
                 <button class="logout-btn" onclick="handleLogout()">Terminate Session</button>
             </topbar>
 
@@ -591,7 +646,7 @@
 
                     <div class="stats-card">
                         <h3>Portfolio Performance Summary</h3>
-                        <p style="color: var(--text-muted); margin-top: 6px; font-size: 0.9rem;">Your account is ready for institutional liquidity deployment. Head over to <strong>Liquidity Tiers</strong> to initiate your 6-day cycle simulation.</p>
+                        <p style="color: var(--text-muted); margin-top: 6px; font-size: 0.9rem;">Your account is ready for institutional liquidity deployment. Click the menu (☰) above to access <strong>Liquidity Tiers</strong> and initiate your 6-day cycle simulation.</p>
                     </div>
                 </div>
 
@@ -630,7 +685,7 @@
                         <h3>Available Balance for Payout</h3>
                         <div class="metric" id="reward-val">$0.00</div>
                         <br>
-                        <button class="btn" style="max-width: 260px;" onclick="triggerWithdrawalRequest()">Request Cash Out</button>
+                        <button class="btn" style="max-width: 260px;" onclick="delayedAction(triggerWithdrawalRequest)">Request Cash Out</button>
                     </div>
 
                     <div class="stats-card hidden" id="withdrawal-step-2">
@@ -638,7 +693,7 @@
                         <p style="margin-top: 6px; color: var(--text-muted);">Transfer matching input equivalent of <strong id="req-amount" style="color: white;">$0</strong> to the institutional deposit wallet:</p>
                         <div class="wallet-display" id="random-wallet">0x71C839b92A41f82cE3d58A912b4B812c3e10A92b</div>
                         <br>
-                        <button class="btn" style="background-color: var(--success); max-width: 260px;" onclick="confirmPaymentSimulation()">Confirm Payment Sent</button>
+                        <button class="btn" style="background-color: var(--success); max-width: 260px;" onclick="delayedAction(confirmPaymentSimulation)">Confirm Payment Sent</button>
                     </div>
                 </div>
 
@@ -700,20 +755,41 @@
                             <li>6-Day Automated Cycle</li>
                             <li>Institutional Security</li>
                         </ul>
-                        <button class="btn" onclick="selectTier(${t.amount})">Mount Allocation</button>
+                        <button class="btn" onclick="delayedAction(() => selectTier(${t.amount}))">Mount Allocation</button>
                     </div>
                 `;
             });
         };
 
+        function toggleSidebar() {
+            const sidebar = document.getElementById('app-sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // Generic wrapper adding deliberate institutional processing delay to clicks
+        function delayedAction(actionCallback, loadingText = "ESTABLISHING SECURE PROTOCOL...") {
+            const loader = document.getElementById('tab-loader');
+            document.getElementById('loader-text').innerText = loadingText;
+            loader.classList.remove('hidden');
+
+            setTimeout(() => {
+                loader.classList.add('hidden');
+                actionCallback();
+            }, 600);
+        }
+
         function showSignup() {
-            document.getElementById('login-view').classList.add('hidden');
-            document.getElementById('signup-view').classList.remove('hidden');
+            delayedAction(() => {
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('signup-view').classList.remove('hidden');
+            }, "LOADING REGISTRATION MODULE...");
         }
 
         function showLogin() {
-            document.getElementById('signup-view').classList.add('hidden');
-            document.getElementById('login-view').classList.remove('hidden');
+            delayedAction(() => {
+                document.getElementById('signup-view').classList.add('hidden');
+                document.getElementById('login-view').classList.remove('hidden');
+            }, "LOADING AUTH PORTAL...");
         }
 
         function handleRegister() {
@@ -728,7 +804,6 @@
                 return;
             }
 
-            // Retrieve existing users array from localStorage
             let users = JSON.parse(localStorage.getItem('aura_users') || '[]');
 
             // Duplicate guard: check if username, email, OR phone already exists
@@ -739,7 +814,6 @@
                 return;
             }
 
-            // Save new user object
             users.push({ fullname, email, phone, username, password });
             localStorage.setItem('aura_users', JSON.stringify(users));
 
@@ -758,7 +832,6 @@
 
             let users = JSON.parse(localStorage.getItem('aura_users') || '[]');
             
-            // Default mock admin user if no users registered yet
             if (users.length === 0) {
                 users.push({ fullname: "Admin Trader", email: "admin@aura.com", phone: "+1000000000", username: "admin", password: "password123" });
                 localStorage.setItem('aura_users', JSON.stringify(users));
@@ -783,10 +856,8 @@
         }
 
         function switchTab(tabId, element) {
-            const loader = document.getElementById('tab-loader');
-            loader.classList.remove('hidden');
-
-            setTimeout(() => {
+            toggleSidebar(); // Close sidebar drawer upon selecting tab
+            delayedAction(() => {
                 document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
                 document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
                 
@@ -796,9 +867,7 @@
                 if (tabId === 'withdrawal') {
                     document.getElementById('reward-val').innerText = `$${Math.floor(currentBalance).toLocaleString()}`;
                 }
-
-                loader.classList.add('hidden');
-            }, 600);
+            }, "SYNCING SECURE MODULE...");
         }
 
         function selectTier(amount) {
