@@ -15,6 +15,7 @@
             --accent-hover: #1d4ed8;
             --success: #10b981;
             --warning: #f59e0b;
+            --danger: #ef4444;
             --text-main: #f9fafb;
             --text-muted: #9ca3af;
         }
@@ -39,6 +40,45 @@
             display: none !important;
         }
 
+        /* --- Toast Notification Container --- */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+            width: calc(100% - 40px);
+        }
+
+        .toast {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent);
+            color: var(--text-main);
+            padding: 14px 18px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            line-height: 1.4;
+        }
+
+        .toast.success { border-left-color: var(--success); }
+        .toast.danger { border-left-color: var(--danger); }
+        .toast.warning { border-left-color: var(--warning); }
+        .toast.info { border-left-color: var(--accent); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
         /* --- Live Market Ticker Bar --- */
         .market-ticker {
             background: #02040a;
@@ -58,7 +98,7 @@
             margin-left: 6px;
         }
         .ticker-item.down span {
-            color: #ef4444;
+            color: var(--danger);
         }
 
         /* --- Auth Screens --- */
@@ -526,6 +566,9 @@
 </head>
 <body>
 
+    <!-- Notification Toast Anchor -->
+    <div id="toast-container"></div>
+
     <!-- Live Market Ticker -->
     <div class="market-ticker">
         <div class="ticker-item">S&P 500: <strong>5,842.10</strong><span>+0.64%</span></div>
@@ -565,7 +608,7 @@
                 </div>
             </div>
 
-            <button class="btn" onclick="delayedAction(initiateRegistrationProcess, 'GENERATING DUAL-CHANNEL OTP...')">Dispatch OTP & Verify Credential</button>
+            <button class="btn" onclick="delayedAction(initiateRegistrationProcess, 'DISPATCHING DUAL-CHANNEL OTP...')">Dispatch OTP & Verify Credential</button>
             <div class="auth-switch">
                 Already registered? <span onclick="showLogin()">Sign In with Email</span>
             </div>
@@ -575,24 +618,19 @@
     <!-- OTP Verification Modal -->
     <div id="otp-modal" class="auth-container hidden" style="position: fixed; top: 0; left: 0; z-index: 200; background: rgba(3, 7, 18, 0.95); backdrop-filter: blur(8px);">
         <div class="auth-box" style="text-align: center;">
-            <h2>Two-Factor OTP Security Check</h2>
-            <p class="subtitle" id="otp-target-info">A 6-digit verification code was dispatched to your email and phone number.</p>
-            
-            <div style="background: rgba(37, 99, 235, 0.12); border: 1px solid var(--accent); padding: 14px; border-radius: 8px; margin-bottom: 20px;">
-                <p style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px;">Simulated Dispatch Receiver (Sandbox Mode)</p>
-                <div id="simulated-otp-code" style="font-size: 1.6rem; font-weight: 800; color: #60a5fa; letter-spacing: 6px; font-family: monospace;">------</div>
-            </div>
+            <h2>Two-Factor Security Verification</h2>
+            <p class="subtitle" id="otp-target-info">A 6-digit verification code has been transmitted to your verified mobile and email channels.</p>
 
             <div class="input-group">
-                <label>Enter 6-Digit Code</label>
-                <input type="text" id="otp-input" maxlength="6" placeholder="000000" style="text-align: center; font-size: 1.5rem; letter-spacing: 8px; font-weight: bold;">
+                <label>Enter Security Code</label>
+                <input type="text" id="otp-input" maxlength="6" placeholder="000000" style="text-align: center; font-size: 1.6rem; letter-spacing: 8px; font-weight: bold;">
             </div>
 
-            <button class="btn" onclick="delayedAction(confirmOTPAndRegister, 'VERIFYING SECURITY CODE...')">Validate & Complete Provisioning</button>
+            <button class="btn" onclick="delayedAction(confirmOTPAndRegister, 'VALIDATING SECURITY CODE...')">Validate & Mount Credential</button>
             <button class="btn" style="background: transparent; border: 1px solid var(--border-color); margin-top: 8px;" onclick="cancelOTP()">Cancel Verification</button>
 
             <div class="auth-switch" style="margin-top: 16px;">
-                Didn't receive code? <span onclick="resendOTP()" id="resend-btn">Resend OTP</span>
+                Didn't receive code? <span onclick="resendOTP()" id="resend-btn">Resend OTP Code</span>
             </div>
         </div>
     </div>
@@ -757,7 +795,7 @@
         let cycleStartTime = 0;
         let ledgerEntries = [];
 
-        // OTP State Variables
+        // OTP State
         let activeOTP = "";
         let pendingRegistrationData = null;
 
@@ -790,6 +828,22 @@
             });
         };
 
+        // --- Custom UI Toast Notifications (No domain alerts) ---
+        function notify(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<span>${message}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4500);
+        }
+
         function toggleSidebar() {
             const sidebar = document.getElementById('app-sidebar');
             sidebar.classList.toggle('open');
@@ -821,8 +875,7 @@
             }, "LOADING AUTH PORTAL...");
         }
 
-        // --- OTP & Registration Logic ---
-
+        // --- Dual-Channel OTP Logic ---
         function generate6DigitOTP() {
             return Math.floor(100000 + Math.random() * 900000).toString();
         }
@@ -835,7 +888,7 @@
             const password = document.getElementById('reg-pass').value.trim();
 
             if (!fullname || !email || !phone || !username || !password) {
-                alert("Please complete all registration fields for compliance verification.");
+                notify("Please complete all registration fields for compliance verification.", "warning");
                 return;
             }
 
@@ -843,45 +896,41 @@
             const duplicate = users.find(u => u.email === email || u.username === username || u.phone === phone);
             
             if (duplicate) {
-                alert("An account with this Email, Username, or Phone already exists in the system registry! Please sign in.");
+                notify("An account with this Email, Username, or Phone already exists.", "danger");
                 showLogin();
                 return;
             }
 
-            // Save temporarily pending OTP verification
             pendingRegistrationData = { fullname, email, phone, username, password };
-            
-            // Generate OTP
             activeOTP = generate6DigitOTP();
 
-            // Display OTP Modal
-            document.getElementById('otp-target-info').innerText = `A 6-digit verification code was dispatched to email: ${email} and phone: ${phone}`;
-            document.getElementById('simulated-otp-code').innerText = activeOTP;
+            document.getElementById('otp-target-info').innerText = `A 6-digit verification code was transmitted to ${email} and ${phone}.`;
             document.getElementById('otp-input').value = "";
             document.getElementById('otp-modal').classList.remove('hidden');
+
+            // Dispatch realistic notification badge
+            notify(`📱 <strong>[SMS Security Notice]</strong> Verification Code: <strong>${activeOTP}</strong>`, "info");
         }
 
         function resendOTP() {
             activeOTP = generate6DigitOTP();
-            document.getElementById('simulated-otp-code').innerText = activeOTP;
-            alert(`New OTP code re-sent to ${pendingRegistrationData.email} and ${pendingRegistrationData.phone}`);
+            notify(`📱 <strong>[SMS Security Notice]</strong> New Verification Code: <strong>${activeOTP}</strong>`, "info");
         }
 
         function confirmOTPAndRegister() {
             const enteredOTP = document.getElementById('otp-input').value.trim();
 
             if (enteredOTP !== activeOTP) {
-                alert("Invalid OTP verification code. Please check the 6-digit code and try again.");
+                notify("Invalid security code. Please check the 6-digit OTP and try again.", "danger");
                 return;
             }
 
-            // OTP verified, finalize registration
             let users = JSON.parse(localStorage.getItem('aura_users') || '[]');
             users.push(pendingRegistrationData);
             localStorage.setItem('aura_users', JSON.stringify(users));
 
             document.getElementById('otp-modal').classList.add('hidden');
-            alert("Dual-channel OTP Verification Successful! Your institutional credential has been provisioned.");
+            notify("OTP Verification Successful! Terminal credential provisioned.", "success");
             
             pendingRegistrationData = null;
             activeOTP = "";
@@ -892,6 +941,7 @@
             document.getElementById('otp-modal').classList.add('hidden');
             pendingRegistrationData = null;
             activeOTP = "";
+            notify("OTP Verification canceled.", "warning");
         }
 
         function handleLogin() {
@@ -899,7 +949,7 @@
             const password = document.getElementById('login-pass').value.trim();
 
             if (!email || !password) {
-                alert("Please enter both your email address and password.");
+                notify("Please enter both your registered email address and password.", "warning");
                 return;
             }
 
@@ -916,9 +966,10 @@
                 document.getElementById('display-user').innerText = `Terminal: ${matchedUser.fullname} (${matchedUser.email})`;
                 document.getElementById('login-view').classList.add('hidden');
                 document.getElementById('app-wrapper').classList.remove('hidden');
+                notify("Terminal Session Mounted Successfully.", "success");
                 addLedgerRecord("Session Mounted", "System", "Success");
             } else {
-                alert("Authentication failed. Invalid email address or password.");
+                notify("Authentication failed. Invalid email address or password.", "danger");
             }
         }
 
@@ -926,6 +977,7 @@
             document.getElementById('app-wrapper').classList.add('hidden');
             document.getElementById('login-view').classList.remove('hidden');
             clearInterval(simulationInterval);
+            notify("Terminal Session Terminated.", "info");
         }
 
         function switchTab(tabId, element) {
@@ -951,7 +1003,7 @@
             document.getElementById('req-amount').innerText = `$${amount.toLocaleString()}`;
             
             addLedgerRecord("Tier Allocation", `$${amount.toLocaleString()}`, "Active");
-            alert(`Liquidity pool allocation of $${amount.toLocaleString()} mounted successfully.`);
+            notify(`Liquidity pool allocation of $${amount.toLocaleString()} mounted successfully.`, "success");
             startSimulation();
         }
 
@@ -987,6 +1039,7 @@
                 if (currentBalance >= target) {
                     document.getElementById('tracker-status').innerText = `Status: Target Reached! 10x multiplier completed ($${target.toLocaleString()}).`;
                     addLedgerRecord("Cycle Complete (10x)", `$${target.toLocaleString()}`, "Completed");
+                    notify("10x Growth Cycle Target Achieved!", "success");
                     clearInterval(simulationInterval);
                 }
             }, 4000);
@@ -994,7 +1047,7 @@
 
         function triggerWithdrawalRequest() {
             if (currentTier === 0) {
-                alert("Please select and mount an allocation pool first.");
+                notify("Please select and mount an allocation pool first.", "warning");
                 return;
             }
 
@@ -1010,10 +1063,11 @@
             document.getElementById('withdrawal-step-1').classList.add('hidden');
             document.getElementById('withdrawal-step-2').classList.remove('hidden');
             addLedgerRecord("Cash-Out Request", `$${Math.floor(currentBalance).toLocaleString()}`, "Pending Verification");
+            notify("Settlement Gateway Initialized. Verification deposit required.", "info");
         }
 
         function confirmPaymentSimulation() {
-            alert("Deposit submitted! Network hash confirmation pending verification.");
+            notify("Deposit submitted. Network hash confirmation pending verification.", "success");
             document.getElementById('withdrawal-step-2').innerHTML = `<h3>Verification in Progress</h3><p style="margin-top:10px; color:var(--success);">Matching deposit payment registered on network ledger. Settlement pending execution.</p>`;
             addLedgerRecord("Verification Deposit", `$${currentTier.toLocaleString()}`, "Pending Network");
         }
