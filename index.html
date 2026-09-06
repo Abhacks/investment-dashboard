@@ -565,9 +565,34 @@
                 </div>
             </div>
 
-            <button class="btn" onclick="delayedAction(handleRegister)">Provision Terminal Credential</button>
+            <button class="btn" onclick="delayedAction(initiateRegistrationProcess, 'GENERATING DUAL-CHANNEL OTP...')">Dispatch OTP & Verify Credential</button>
             <div class="auth-switch">
                 Already registered? <span onclick="showLogin()">Sign In with Email</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- OTP Verification Modal -->
+    <div id="otp-modal" class="auth-container hidden" style="position: fixed; top: 0; left: 0; z-index: 200; background: rgba(3, 7, 18, 0.95); backdrop-filter: blur(8px);">
+        <div class="auth-box" style="text-align: center;">
+            <h2>Two-Factor OTP Security Check</h2>
+            <p class="subtitle" id="otp-target-info">A 6-digit verification code was dispatched to your email and phone number.</p>
+            
+            <div style="background: rgba(37, 99, 235, 0.12); border: 1px solid var(--accent); padding: 14px; border-radius: 8px; margin-bottom: 20px;">
+                <p style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px;">Simulated Dispatch Receiver (Sandbox Mode)</p>
+                <div id="simulated-otp-code" style="font-size: 1.6rem; font-weight: 800; color: #60a5fa; letter-spacing: 6px; font-family: monospace;">------</div>
+            </div>
+
+            <div class="input-group">
+                <label>Enter 6-Digit Code</label>
+                <input type="text" id="otp-input" maxlength="6" placeholder="000000" style="text-align: center; font-size: 1.5rem; letter-spacing: 8px; font-weight: bold;">
+            </div>
+
+            <button class="btn" onclick="delayedAction(confirmOTPAndRegister, 'VERIFYING SECURITY CODE...')">Validate & Complete Provisioning</button>
+            <button class="btn" style="background: transparent; border: 1px solid var(--border-color); margin-top: 8px;" onclick="cancelOTP()">Cancel Verification</button>
+
+            <div class="auth-switch" style="margin-top: 16px;">
+                Didn't receive code? <span onclick="resendOTP()" id="resend-btn">Resend OTP</span>
             </div>
         </div>
     </div>
@@ -732,6 +757,10 @@
         let cycleStartTime = 0;
         let ledgerEntries = [];
 
+        // OTP State Variables
+        let activeOTP = "";
+        let pendingRegistrationData = null;
+
         const tiers = [
             { amount: 500, label: "Tier I - Alpha" },
             { amount: 1000, label: "Tier II - Beta" },
@@ -766,7 +795,6 @@
             sidebar.classList.toggle('open');
         }
 
-        // Generic wrapper adding deliberate institutional processing delay to clicks
         function delayedAction(actionCallback, loadingText = "ESTABLISHING SECURE PROTOCOL...") {
             const loader = document.getElementById('tab-loader');
             document.getElementById('loader-text').innerText = loadingText;
@@ -789,10 +817,17 @@
             delayedAction(() => {
                 document.getElementById('signup-view').classList.add('hidden');
                 document.getElementById('login-view').classList.remove('hidden');
+                document.getElementById('otp-modal').classList.add('hidden');
             }, "LOADING AUTH PORTAL...");
         }
 
-        function handleRegister() {
+        // --- OTP & Registration Logic ---
+
+        function generate6DigitOTP() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
+
+        function initiateRegistrationProcess() {
             const fullname = document.getElementById('reg-fullname').value.trim();
             const email = document.getElementById('reg-email').value.trim();
             const phone = document.getElementById('reg-phone').value.trim();
@@ -805,20 +840,58 @@
             }
 
             let users = JSON.parse(localStorage.getItem('aura_users') || '[]');
-
-            // Duplicate guard: check if username, email, OR phone already exists
             const duplicate = users.find(u => u.email === email || u.username === username || u.phone === phone);
+            
             if (duplicate) {
                 alert("An account with this Email, Username, or Phone already exists in the system registry! Please sign in.");
                 showLogin();
                 return;
             }
 
-            users.push({ fullname, email, phone, username, password });
+            // Save temporarily pending OTP verification
+            pendingRegistrationData = { fullname, email, phone, username, password };
+            
+            // Generate OTP
+            activeOTP = generate6DigitOTP();
+
+            // Display OTP Modal
+            document.getElementById('otp-target-info').innerText = `A 6-digit verification code was dispatched to email: ${email} and phone: ${phone}`;
+            document.getElementById('simulated-otp-code').innerText = activeOTP;
+            document.getElementById('otp-input').value = "";
+            document.getElementById('otp-modal').classList.remove('hidden');
+        }
+
+        function resendOTP() {
+            activeOTP = generate6DigitOTP();
+            document.getElementById('simulated-otp-code').innerText = activeOTP;
+            alert(`New OTP code re-sent to ${pendingRegistrationData.email} and ${pendingRegistrationData.phone}`);
+        }
+
+        function confirmOTPAndRegister() {
+            const enteredOTP = document.getElementById('otp-input').value.trim();
+
+            if (enteredOTP !== activeOTP) {
+                alert("Invalid OTP verification code. Please check the 6-digit code and try again.");
+                return;
+            }
+
+            // OTP verified, finalize registration
+            let users = JSON.parse(localStorage.getItem('aura_users') || '[]');
+            users.push(pendingRegistrationData);
             localStorage.setItem('aura_users', JSON.stringify(users));
 
-            alert("Credential registered successfully! You may now sign in using your email.");
+            document.getElementById('otp-modal').classList.add('hidden');
+            alert("Dual-channel OTP Verification Successful! Your institutional credential has been provisioned.");
+            
+            pendingRegistrationData = null;
+            activeOTP = "";
             showLogin();
+        }
+
+        function cancelOTP() {
+            document.getElementById('otp-modal').classList.add('hidden');
+            pendingRegistrationData = null;
+            activeOTP = "";
         }
 
         function handleLogin() {
@@ -856,7 +929,7 @@
         }
 
         function switchTab(tabId, element) {
-            toggleSidebar(); // Close sidebar drawer upon selecting tab
+            toggleSidebar();
             delayedAction(() => {
                 document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
                 document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
@@ -965,3 +1038,4 @@
     </script>
 </body>
 </html>
+
