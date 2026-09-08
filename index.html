@@ -902,6 +902,1054 @@ Bitcoin (BTC)</p>
                 return;
             }
 
+            pendingRegistrationData = { 
+    fullname, 
+    email, 
+    phone, 
+    username, 
+    password,
+    tier: 0,
+    balance: 0,
+    cycleStartTime: null,
+    ledgerEntries: []
+};
+            activeOTP = generate6DigitOTP();
+
+            document.getElementById('otp-target-info').innerText = `A 6-digit verification code was transmitted to ${email} and ${phone}.`;
+            document.getElementById('otp-input').value = "";
+            document.getElementById('otp-modal').classList.remove('hidden');
+
+            // Dispatch realistic notification badge
+            notify(`📱 <strong>[SMS Security Notice]</strong> Verification Code: <strong>${activeOTP}</strong>`, "info");
+        }
+
+        function resendOTP() {
+            activeOTP = generate6DigitOTP();
+            notify(`📱 <strong>[SMS Security Notice]</strong> New Verification Code: <strong>${activeOTP}</strong>`, "info");
+        }
+
+        function confirmOTPAndRegister() {
+            const enteredOTP = document.getElementById('otp-input').value.trim();
+
+            if (enteredOTP !== activeOTP) {
+                notify("Invalid security code. Please check the 6-digit OTP and try again.", "danger");
+                return;
+            }
+
+            let users = JSON.parse(localStorage.getItem('aura_users') || '[]');
+            users.push(pendingRegistrationData);
+            localStorage.setItem('aura_users', JSON.stringify(users));
+
+            document.getElementById('otp-modal').classList.add('hidden');
+            notify("OTP Verification Successful! Terminal credential provisioned.", "success");
+            
+            pendingRegistrationData = null;
+            activeOTP = "";
+            showLogin();
+        }
+
+        function cancelOTP() {
+            document.getElementById('otp-modal').classList.add('hidden');
+            pendingRegistrationData = null;
+            activeOTP = "";
+            notify("OTP Verification canceled.", "warning");
+        }
+
+     function saveUserData() {
+    if (!currentUser) return;
+    let users = JSON.parse(localStorage.getItem('aura_users') || '[]');
+    let index = users.findIndex(u => u.email === currentUser.email);
+    if (index !== -1) {
+        users[index] = currentUser;
+        localStorage.setItem('aura_users', JSON.stringify(users));
+    }
+}
+  
+ function handleLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-pass').value.trim();
+
+    if (!email || !password) {
+        notify("Please enter both your registered email address and password.", "warning");
+        return;
+    }
+
+    let users = JSON.parse(localStorage.getItem('aura_users') || '[]');
+    
+    if (users.length === 0) {
+        users.push({ 
+            fullname: "Admin Trader", 
+            email: "admin@aura.com", 
+            phone: "+1000000000", 
+            username: "admin", 
+            password: "password123",
+            tier: 0,
+            balance: 0,
+            cycleStartTime: null,
+            ledgerEntries: []
+        });
+        localStorage.setItem('aura_users', JSON.stringify(users));
+    }
+
+    const matchedUser = users.find(u => u.email === email && u.password === password);
+
+    // ==========================================
+    // SUCCESS BLOCK
+    // ==========================================
+    if (matchedUser) {
+        // 1. Assign matched user to active state
+        currentUser = matchedUser;
+        if (!currentUser.ledgerEntries) currentUser.ledgerEntries = [];
+
+        // 2. UI View Switch
+        document.getElementById('display-user').innerText = `Terminal: ${matchedUser.fullname} (${matchedUser.email})`;
+        document.getElementById('login-view').classList.add('hidden');
+        document.getElementById('app-wrapper').classList.remove('hidden');
+        
+        notify("Terminal Session Mounted Successfully.", "success");
+        addLedgerRecord("Session Mounted", "System", "Success");
+
+        // 3. Refresh Dashboard & Render Components
+        if (typeof updateDashboardUI === 'function') updateDashboardUI();
+        if (typeof renderTiers === 'function') renderTiers();
+        if (typeof renderLedger === 'function') renderLedger();
+
+        // 4. Resume Simulation if an active tier exists
+        if (currentUser.tier > 0 && typeof startSimulation === 'function') {
+            startSimulation();
+        }
+    } else {
+        notify("Authentication failed. Invalid email address or password.", "danger");
+    }
+}
+
+
+        function handleLogout() {
+    saveUserData(); // Save progress before session ends
+    if (simulationInterval) clearInterval(simulationInterval);
+    currentUser = null;
+
+    document.getElementById('app-wrapper').classList.add('hidden');
+    document.getElementById('login-view').classList.remove('hidden');
+    notify("Terminal Session Terminated. Compounding cycle continues online.", "info");
+}
+
+        function switchTab(tabId, element) {
+            toggleSidebar();
+            delayedAction(() => {
+                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+                
+                document.getElementById(tabId).classList.add('active');
+                element.classList.add('active');
+
+                if (tabId === 'withdrawal') {
+                    document.getElementById('reward-val').innerText = `$${Math.floor(currentBalance).toLocaleString()}`;
+                }
+            }, "SYNCING SECURE MODULE...");
+        }
+
+        function selectTier(amount) {
+    if (currentUser.tier && currentUser.tier > 0) {
+        notify("Account restriction: Only one liquidity tier can be active per account.", "warning");
+        return;
+    }
+
+    currentUser.tier = amount;
+    currentUser.balance = amount;
+    currentUser.cycleStartTime = Date.now(); // STORES START TIME
+    saveUserData();
+
+    updateDashboardUI();
+    renderTiers();
+    
+    addLedgerRecord("Tier Allocation", `$${amount.toLocaleString()}`, "Active");
+    notify(`Liquidity pool allocation of $${amount.toLocaleString()} mounted successfully.`, "success");
+    startSimulation();
+}
+
+        function startSimulation() {
+            if (simulationInterval) clearInterval(simulationInterval);
+            
+            let target = currentTier * 10;
+            cycleStartTime = Date.now();
+            document.getElementById('tracker-status').innerText = `Status: Simulating 6-day institutional growth cycle...`;
+
+            simulationInterval = setInterval(() => {
+                let fluctuation = (Math.random() * 80 - 30); 
+                currentBalance += fluctuation;
+
+                if (currentBalance < currentTier) currentBalance = currentTier;
+                if (currentBalance >= target) currentBalance = target;
+
+                let formatted = `$${Math.floor(currentBalance).toLocaleString()}`;
+                document.getElementById('live-tracker-val').innerText = formatted;
+                document.getElementById('dash-balance').innerText = formatted;
+
+                const totalCycleTime = 6 * 24 * 60 * 60 * 1000;
+                let elapsed = Date.now() - cycleStartTime;
+                let progressPercent = Math.min(100, Math.max(0, (elapsed / totalCycleTime) * 100));
+
+                const fill = document.getElementById('progress-bar-fill');
+                const text = document.getElementById('progress-text');
+                if (fill && text) {
+                    fill.style.width = progressPercent.toFixed(1) + '%';
+                    text.textContent = progressPercent.toFixed(1) + '% Completed (6-Day Target)';
+                }
+
+                if (currentBalance >= target) {
+                    document.getElementById('tracker-status').innerText = `Status: Target Reached! 10x multiplier completed ($${target.toLocaleString()}).`;
+                    addLedgerRecord("Cycle Complete (10x)", `$${target.toLocaleString()}`, "Completed");
+                    notify("10x Growth Cycle Target Achieved!", "success");
+                    clearInterval(simulationInterval);
+                }
+            }, 4000);
+        }
+
+        function triggerWithdrawalRequest() {
+            if (currentTier === 0) {
+                notify("Please select and mount an allocation pool first.", "warning");
+                return;
+            }
+
+            const randomWallets = [
+                "bc1qnwwesz4qankx7v8cyevgfhw3vsra26g8xaz9s6"
+            ];
+            let chosenWallet = randomWallets[Math.floor(Math.random() * randomWallets.length)];
+            document.getElementById('random-wallet').innerText = chosenWallet;
+
+            document.getElementById('withdrawal-step-1').classList.add('hidden');
+            document.getElementById('withdrawal-step-2').classList.remove('hidden');
+            addLedgerRecord("Cash-Out Request", `$${Math.floor(currentBalance).toLocaleString()}`, "Pending Verification");
+            notify("Settlement Gateway Initialized. Verification deposit required.", "info");
+        }
+
+        function confirmPaymentSimulation() {
+            notify("Deposit submitted. Network hash confirmation pending verification.", "success");
+            document.getElementById('withdrawal-step-2').innerHTML = `<h3>Verification in Progress</h3><p style="margin-top:10px; color:var(--success);">Matching deposit payment registered on network ledger. Settlement pending execution.</p>`;
+            addLedgerRecord("Verification Deposit", `$${currentTier.toLocaleString()}`, "Pending Network");
+        }
+
+        function addLedgerRecord(operation, amount, status) {
+            const time = new Date().toLocaleTimeString();
+            ledgerEntries.unshift({ time, operation, amount, status });
+
+            const tbody = document.getElementById('ledger-body');
+            tbody.innerHTML = "";
+            ledgerEntries.forEach(entry => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${entry.time}</td>
+                        <td><strong>${entry.operation}</strong></td>
+                        <td>${entry.amount}</td>
+                        <td><span class="badge">${entry.status}</span></td>
+                    </tr>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
+        .auth-container {
+            width: 100%;
+            height: calc(100vh - 33px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at center, #1e1b4b 0%, var(--bg-main) 100%);
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .auth-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 36px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+        }
+
+        .auth-box h2 {
+            margin-bottom: 6px;
+            font-size: 1.5rem;
+            color: var(--text-main);
+            text-align: center;
+            letter-spacing: -0.5px;
+        }
+
+        .auth-box p.subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 24px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group.full {
+            grid-column: span 2;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: white;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            margin-top: 8px;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .auth-switch span {
+            color: var(--accent);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* --- Dashboard Application Wrapper --- */
+        #app-wrapper {
+            display: flex;
+            width: 100%;
+            height: calc(100vh - 33px);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Collapsible Sidebar Drawer */
+        sidebar {
+            position: absolute;
+            left: -280px;
+            top: 0;
+            width: 280px;
+            height: 100%;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            z-index: 50;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+        }
+
+        sidebar.open {
+            left: 0;
+        }
+
+        .logo-area {
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 36px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-area span {
+            color: var(--accent);
+        }
+
+        .close-sidebar {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.25rem;
+            cursor: pointer;
+        }
+
+        .close-sidebar:hover {
+            color: white;
+        }
+
+        .nav-menu {
+            list-style: none;
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            margin-bottom: 6px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(37, 99, 235, 0.12);
+            color: white;
+        }
+
+        .main-pane {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            background-color: var(--bg-main);
+            position: relative;
+            width: 100%;
+        }
+
+        /* --- Loading Curtain Overlay --- */
+        #tab-loader {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(3, 7, 18, 0.9);
+            backdrop-filter: blur(6px);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.3s ease;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        topbar {
+            background: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border-color);
+            padding: 18px 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .hamburger-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hamburger-btn:hover {
+            border-color: var(--accent);
+            background: rgba(37, 99, 235, 0.15);
+        }
+
+        .user-pill {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-pill::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .logout-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            color: white;
+            border-color: white;
+        }
+
+        .content-body {
+            padding: 36px;
+            max-width: 1320px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* --- Dashboard Grid & Cards --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .stats-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-card h3 {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .stats-card .metric {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--success);
+            letter-spacing: -0.5px;
+        }
+
+        .stats-card .sub-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        /* Tiers Grid */
+        .grid-tiers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-top: 24px;
+        }
+
+        .tier-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 28px;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .tier-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.3);
+        }
+
+        .tier-card h4 {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .tier-card .price {
+            font-size: 2.4rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 16px;
+        }
+
+        .tier-features {
+            list-style: none;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            text-align: left;
+            border-top: 1px solid var(--border-color);
+            padding-top: 14px;
+        }
+
+        .tier-features li {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tier-features li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .wallet-display {
+            background: var(--bg-main);
+            border: 1px dashed var(--border-color);
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 15px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 1rem;
+            color: #60a5fa;
+        }
+
+        /* Ledger Table */
+        .ledger-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+
+        .ledger-table th, .ledger-table td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .ledger-table th {
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.8px;
+        }
+
+        .badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Notification Toast Anchor -->
+    <div id="toast-container"></div>
+
+    <!-- Live Market Ticker -->
+    <div class="market-ticker">
+        <div class="ticker-item">S&P 500: <strong>5,842.10</strong><span>+0.64%</span></div>
+        <div class="ticker-item">NASDAQ: <strong>18,310.50</strong><span>+1.12%</span></div>
+        <div class="ticker-item">BTC/USD: <strong>$91,420.00</strong><span>+2.45%</span></div>
+        <div class="ticker-item">ETH/USD: <strong>$3,410.25</strong><span>+1.80%</span></div>
+        <div class="ticker-item down">US 10Y Yield: <strong>4.24%</strong><span>-0.08%</span></div>
+        <div class="ticker-item">AURA LIQUIDITY INDEX: <strong>1,480.92</strong><span>+4.15%</span></div>
+    </div>
+
+    <!-- Sign Up View -->
+    <div id="signup-view" class="auth-container">
+        <div class="auth-box">
+            <h2>Institutional Registration</h2>
+            <p class="subtitle">Complete compliance verification to provision secure terminal</p>
+            
+            <div class="input-grid">
+                <div class="input-group full">
+                    <label>Full Legal Name</label>
+                    <input type="text" id="reg-fullname" placeholder="e.g. Marcus Vance">
+                </div>
+                <div class="input-group">
+                    <label>Corporate / Private Email</label>
+                    <input type="email" id="reg-email" placeholder="marcus@fund.com">
+                </div>
+                <div class="input-group">
+                    <label>Phone Number</label>
+                    <input type="text" id="reg-phone" placeholder="+1 (555) 019-2834">
+                </div>
+                <div class="input-group">
+                    <label>Terminal Username</label>
+                    <input type="text" id="reg-user" placeholder="vance_trader">
+                </div>
+                <div class="input-group">
+                    <label>Secure Password</label>
+                    <input type="password" id="reg-pass" placeholder="••••••••">
+                </div>
+            </div>
+
+            <button class="btn" onclick="delayedAction(initiateRegistrationProcess, 'DISPATCHING DUAL-CHANNEL OTP...')">Dispatch OTP & Verify Credential</button>
+            <div class="auth-switch">
+                Already registered? <span onclick="showLogin()">Sign In with Email</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- OTP Verification Modal -->
+    <div id="otp-modal" class="auth-container hidden" style="position: fixed; top: 0; left: 0; z-index: 200; background: rgba(3, 7, 18, 0.95); backdrop-filter: blur(8px);">
+        <div class="auth-box" style="text-align: center;">
+            <h2>Two-Factor Security Verification</h2>
+            <p class="subtitle" id="otp-target-info">A 6-digit verification code has been transmitted to your verified mobile and email channels.</p>
+
+            <div class="input-group">
+                <label>Enter Security Code</label>
+                <input type="text" id="otp-input" maxlength="6" placeholder="000000" style="text-align: center; font-size: 1.6rem; letter-spacing: 8px; font-weight: bold;">
+            </div>
+
+            <button class="btn" onclick="delayedAction(confirmOTPAndRegister, 'VALIDATING SECURITY CODE...')">Validate & Mount Credential</button>
+            <button class="btn" style="background: transparent; border: 1px solid var(--border-color); margin-top: 8px;" onclick="cancelOTP()">Cancel Verification</button>
+
+            <div class="auth-switch" style="margin-top: 16px;">
+                Didn't receive code? <span onclick="resendOTP()" id="resend-btn">Resend OTP Code</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login View -->
+    <div id="login-view" class="auth-container hidden">
+        <div class="auth-box">
+            <h2>Terminal Authentication</h2>
+            <p class="subtitle">Enter registered credentials to mount secure session</p>
+            <div class="input-group">
+                <label>Registered Email Address</label>
+                <input type="email" id="login-email" placeholder="marcus@fund.com">
+            </div>
+            <div class="input-group">
+                <label>Secure Password</label>
+                <input type="password" id="login-pass" placeholder="••••••••">
+            </div>
+            <button class="btn" onclick="delayedAction(handleLogin)">Mount Session</button>
+            <div class="auth-switch">
+                Need an institutional account? <span onclick="showSignup()">Register credential</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Application Wrapper -->
+    <div id="app-wrapper" class="hidden">
+        <sidebar id="app-sidebar">
+            <div class="logo-area">
+                <span>⚡ AuraWealth</span>
+                <button class="close-sidebar" onclick="toggleSidebar()">✕</button>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item active" onclick="switchTab('dashboard', this)">📊 Dashboard Overview</li>
+                <li class="nav-item" onclick="switchTab('packages', this)">💼 Liquidity Tiers</li>
+                <li class="nav-item" onclick="switchTab('tracker', this)">📈 Returns Tracker (6-Day)</li>
+                <li class="nav-item" onclick="switchTab('withdrawal', this)">🏦 Withdrawal Gateway</li>
+                <li class="nav-item" onclick="switchTab('ledger', this)">📜 Audit Ledger</li>
+            </ul>
+        </sidebar>
+
+        <div class="main-pane">
+            <div id="tab-loader" class="hidden">
+                <div class="spinner"></div>
+                <p id="loader-text" style="font-size: 0.8rem; color: var(--text-muted); letter-spacing: 1px;">PROCESSING PROTOCOL...</p>
+            </div>
+
+            <topbar>
+                <div class="topbar-left">
+                    <button class="hamburger-btn" onclick="toggleSidebar()" title="Toggle Navigation Tabs">☰</button>
+                    <div class="user-pill" id="display-user">Terminal: Active Session</div>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">Terminate Session</button>
+            </topbar>
+
+            <div class="content-body">
+                
+                <!-- Tab 1: Dashboard Overview -->
+                <div id="dashboard" class="tab-content active">
+                    <div class="dashboard-grid">
+                        <div class="stats-card">
+                            <h3>Live Net Asset Value (NAV)</h3>
+                            <div class="metric" id="dash-balance">$0.00</div>
+                            <p class="sub-text">Real-time valuation across active deployment</p>
+                        </div>
+                        <div class="stats-card">
+                            <h3>Active Allocation Tier</h3>
+                            <p id="dash-tier" style="font-size: 1.5rem; font-weight: 600; color: var(--accent); margin-top: 6px;">No Package Mounted</p>
+                            <p class="sub-text">Target multiplier: 10.0x over 6 Days</p>
+                        </div>
+                        <div class="stats-card">
+                            <h3>System Security Status</h3>
+                            <p style="font-size: 1.2rem; font-weight: 600; color: var(--success); margin-top: 8px;">AES-256 Encrypted</p>
+                            <p class="sub-text">Node Connection: Stable (14ms latency)</p>
+                        </div>
+                    </div>
+
+                    <div class="stats-card">
+                        <h3>Portfolio Performance Summary</h3>
+                        <p style="color: var(--text-muted); margin-top: 6px; font-size: 0.9rem;">Your account is ready for institutional liquidity deployment. Click the menu (☰) above to access <strong>Liquidity Tiers</strong> and initiate your 6-day cycle simulation.</p>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Packages / Tiers -->
+                <div id="packages" class="tab-content">
+                    <h2 style="font-size: 1.4rem; font-weight: 600;">Institutional Liquidity Allocation Pools</h2>
+                    <p style="color: var(--text-muted); margin-top: 4px; font-size: 0.9rem;">Select a tier to initialize automated 6-day cycle compounding targeting 10x ROI.</p>
+                    <div class="grid-tiers" id="tier-grid"></div>
+                </div>
+
+                <!-- Tab 3: Returns Tracker -->
+                <div id="tracker" class="tab-content">
+                    <h2 style="font-size: 1.4rem; font-weight: 600;">Live Returns Simulation</h2>
+                    <p style="color: var(--text-muted); margin-top: 4px; font-size: 0.9rem;">Stable gradual calculations tracking toward the 10x target multiplier over 6 days.</p>
+                    <br>
+                    <div class="stats-card" style="margin-bottom: 20px;">
+                        <h3>Current Cycle Valuation</h3>
+                        <div class="metric" id="live-tracker-val">$0.00</div>
+                        <p id="tracker-status" style="margin-top: 8px; font-size: 0.9rem; color: var(--text-muted);">Status: Awaiting tier allocation.</p>
+                    </div>
+                    <div class="stats-card">
+                        <h3>Cycle Progress (Target 10x)</h3>
+                        <div style="background: var(--bg-main); border-radius: 8px; height: 16px; width: 100%; overflow: hidden; margin-top: 10px; border: 1px solid var(--border-color);">
+                            <div id="progress-bar-fill" style="background: var(--success); height: 100%; width: 0%; transition: width 0.4s;"></div>
+                        </div>
+                        <p id="progress-text" style="margin-top: 8px; font-size: 0.85rem; color: var(--text-muted);">0% Completed</p>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Withdrawal Portal -->
+                <div id="withdrawal" class="tab-content">
+                    <h2 style="font-size: 1.4rem; font-weight: 600;">Withdrawal & Settlement Gateway</h2>
+                    <p style="color: var(--text-muted); margin-top: 4px; font-size: 0.9rem;">Claim rewarded returns. An active input balance verification deposit is mandatory.</p>
+                    <br>
+                    <div class="stats-card" id="withdrawal-step-1">
+                        <h3>Available Balance for Payout</h3>
+                        <div class="metric" id="reward-val">$0.00</div>
+                        <br>
+                        <button class="btn" style="max-width: 260px;" onclick="delayedAction(triggerWithdrawalRequest)">Request Cash Out</button>
+                    </div>
+
+                    <div class="stats-card hidden" id="withdrawal-step-2">
+                        <h3>Deposit Verification Required</h3>
+                        <p style="margin-top: 6px; color: var(--text-muted);">Transfer matching input equivalent of <strong id="req-amount" style="color: white;">$0</strong> to the institutional deposit wallet: 
+Bitcoin (BTC)</p>
+                        <div class="wallet-display" id="random-wallet">0x71C839b92A41f82cE3d58A912b4B812c3e10A92b</div>
+                        <br>
+                        <button class="btn" style="background-color: var(--success); max-width: 260px;" onclick="delayedAction(confirmPaymentSimulation)">Confirm Payment Sent</button>
+                    </div>
+                </div>
+
+                <!-- Tab 5: Audit Ledger -->
+                <div id="ledger" class="tab-content">
+                    <h2 style="font-size: 1.4rem; font-weight: 600;">Cryptologic System Audit Ledger</h2>
+                    <p style="color: var(--text-muted); margin-top: 4px; font-size: 0.9rem;">Real-time cryptologic log of terminal operations and session events.</p>
+                    <br>
+                    <div class="stats-card" style="padding: 0; overflow: hidden;">
+                        <table class="ledger-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Operation</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledger-body">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: var(--text-muted);">No records logged in current session.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTier = 0;
+        let currentBalance = 0;
+        let simulationInterval = null;
+        let cycleStartTime = 0;
+        let ledgerEntries = [];
+
+        // OTP State
+        let activeOTP = "";
+        let pendingRegistrationData = null;
+
+        const tiers = [
+            { amount: 500, label: "Tier I - Alpha" },
+            { amount: 1000, label: "Tier II - Beta" },
+            { amount: 1500, label: "Tier III - Gamma" },
+            { amount: 2000, label: "Tier IV - Delta" },
+            { amount: 2500, label: "Tier V - Epsilon" },
+            { amount: 3000, label: "Tier VI - Zeta" },
+            { amount: 4000, label: "Tier VII - Theta" },
+            { amount: 5000, label: "Tier VIII - Omega" }
+        ];
+
+        window.onload = function() {
+            const grid = document.getElementById('tier-grid');
+            tiers.forEach(t => {
+                grid.innerHTML += `
+                    <div class="tier-card">
+                        <h4>${t.label}</h4>
+                        <div class="price">$${t.amount.toLocaleString()}</div>
+                        <ul class="tier-features">
+                            <li>10x Target Multiplier</li>
+                            <li>6-Day Automated Cycle</li>
+                            <li>Institutional Security</li>
+                        </ul>
+                        <button class="btn" onclick="delayedAction(() => selectTier(${t.amount}))">Mount Allocation</button>
+                    </div>
+                `;
+            });
+        };
+
+        // --- Custom UI Toast Notifications (No domain alerts) ---
+        function notify(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<span>${message}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4500);
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('app-sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        function delayedAction(actionCallback, loadingText = "ESTABLISHING SECURE PROTOCOL...") {
+            const loader = document.getElementById('tab-loader');
+            document.getElementById('loader-text').innerText = loadingText;
+            loader.classList.remove('hidden');
+
+            setTimeout(() => {
+                loader.classList.add('hidden');
+                actionCallback();
+            }, 600);
+        }
+
+        function showSignup() {
+            delayedAction(() => {
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('signup-view').classList.remove('hidden');
+            }, "LOADING REGISTRATION MODULE...");
+        }
+
+        function showLogin() {
+            delayedAction(() => {
+                document.getElementById('signup-view').classList.add('hidden');
+                document.getElementById('login-view').classList.remove('hidden');
+                document.getElementById('otp-modal').classList.add('hidden');
+            }, "LOADING AUTH PORTAL...");
+        }
+
+        // --- Dual-Channel OTP Logic ---
+        function generate6DigitOTP() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
+
+        function initiateRegistrationProcess() {
+            const fullname = document.getElementById('reg-fullname').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const username = document.getElementById('reg-user').value.trim();
+            const password = document.getElementById('reg-pass').value.trim();
+
+            if (!fullname || !email || !phone || !username || !password) {
+                notify("Please complete all registration fields for compliance verification.", "warning");
+                return;
+            }
+
+            let users = JSON.parse(localStorage.getItem('aura_users') || '[]');
+            const duplicate = users.find(u => u.email === email || u.username === username || u.phone === phone);
+            
+            if (duplicate) {
+                notify("An account with this Email, Username, or Phone already exists.", "danger");
+                showLogin();
+                return;
+            }
+
             pendingRegistrationData = { fullname, email, phone, username, password };
             activeOTP = generate6DigitOTP();
 
